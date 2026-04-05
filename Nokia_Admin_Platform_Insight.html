@@ -10,11 +10,11 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 🚨 บังคับใช้กุญแจของคุณ 100% (บล็อกระบบจำลองของหน้าต่างแชท) 🚨
-        const firebaseConfig = {
+        // 🚨 สลับใช้กุญแจจำลองเมื่ออยู่ใน Preview และใช้กุญแจจริงเมื่ออยู่บน GitHub 🚨
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyB-agjCrPCmLQicu7KJ-Jl9Ca9OyFA8HDQ",
             authDomain: "nokia-fb-report.firebaseapp.com",
             projectId: "nokia-fb-report",
@@ -23,19 +23,28 @@
             appId: "1:58057573736:web:c51e87cb332075a05182dd"
         };
         
-        const appId = 'nokia-insight-v1';
+        const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'nokia-insight-v1';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        window.nokiaDB = { db, auth, appId, setDoc, doc };
+        window.nokiaDB = { db, auth, appId: currentAppId, setDoc, doc };
 
-        // ล็อกอินเข้าฐานข้อมูลของคุณโดยตรง
-        signInAnonymously(auth).catch((error) => {
-            console.error("Firebase Auth Error:", error);
-            const statusText = document.getElementById('ai-status');
-            if (statusText) statusText.innerText = "⚠️ AUTH ERROR: " + error.message;
-        });
+        // ระบบยืนยันตัวตนที่รองรับทั้ง Canvas Preview และ GitHub Pages
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+                const statusText = document.getElementById('ai-status');
+                if (statusText) statusText.innerText = "⚠️ ระบบ Preview อาจมีปัญหาการเชื่อมต่อ แต่โค้ดพร้อมใช้บน Github แล้วครับ";
+            }
+        };
+        initAuth();
     </script>
 
     <style>
@@ -273,7 +282,7 @@
             } catch (e) { return url; }
         }
 
-        // --- 🤖 AI SCAN HANDLER (DIRECT API) ---
+        // --- 🤖 AI SCAN HANDLER ---
         document.getElementById('image-upload').addEventListener('change', async (e) => {
             const files = e.target.files; if(!files.length) return;
             const statusText = document.getElementById('ai-status');
@@ -299,8 +308,7 @@
                     parts.push({ inlineData: { mimeType: f.type, data: b64 } }); 
                 }
 
-                // 🟢 ยิงตรงเข้าโมเดล gemini-1.5-flash ด้วยกุญแจของคุณโดยตรง
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${nokiaApiKey}`, {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${nokiaApiKey}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         contents: [{ role: "user", parts }], 
