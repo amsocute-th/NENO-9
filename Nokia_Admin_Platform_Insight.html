@@ -13,7 +13,7 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 🚨 กุญแจ Firebase สำหรับโปรเจกต์ nokia-fb-report 🚨
+        // 🚨 บังคับใช้กุญแจของคุณ 100% (บล็อกระบบจำลองของหน้าต่างแชท) 🚨
         const firebaseConfig = {
             apiKey: "AIzaSyB-agjCrPCmLQicu7KJ-Jl9Ca9OyFA8HDQ",
             authDomain: "nokia-fb-report.firebaseapp.com",
@@ -30,8 +30,12 @@
 
         window.nokiaDB = { db, auth, appId, setDoc, doc };
 
-        // ยืนยันตัวตนเพื่อเขียนข้อมูล
-        signInAnonymously(auth).catch((error) => console.error("Firebase Auth Error:", error));
+        // ล็อกอินเข้าฐานข้อมูลของคุณโดยตรง
+        signInAnonymously(auth).catch((error) => {
+            console.error("Firebase Auth Error:", error);
+            const statusText = document.getElementById('ai-status');
+            if (statusText) statusText.innerText = "⚠️ AUTH ERROR: " + error.message;
+        });
     </script>
 
     <style>
@@ -112,7 +116,7 @@
         <header class="mb-12 flex flex-col md:flex-row md:justify-between md:items-end border-b border-white/10 pb-6 gap-4">
             <div>
                 <h1 class="text-4xl font-black text-white flex items-center gap-3">
-                    <span class="text-5xl drop-shadow-[0_0_15px_rgba(255,20,147,0.5)]">🧬</span> NEON-9 Insight Admin
+                    <span class="text-5xl drop-shadow-[0_0_15px_rgba(255,20,147,0.5)]">🧬</span> NEON-9 Insight Report Admin
                 </h1>
                 <p class="text-pink-500 font-bold mt-2 tracking-[0.2em] text-xs uppercase">Facebook Insight v.1 (Cloud Enhanced)</p>
             </div>
@@ -123,7 +127,7 @@
 
         <!-- 🚀 AI SCAN SECTION -->
         <div class="glass-card p-8 mb-10 relative overflow-hidden">
-            <h2 class="text-2xl font-black text-white mb-2 flex items-center gap-3">AI Auto-Entry <span class="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full">ACTIVE</span></h2>
+            <h2 class="text-2xl font-black text-white mb-2 flex items-center gap-3">AI Auto-Entry <span class="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full uppercase">Ready</span></h2>
             <div class="w-full relative mt-4">
                 <input type="file" id="image-upload" class="hidden" accept="image/*" multiple>
                 <label for="image-upload" class="cursor-pointer bg-black/20 p-10 border-2 border-dashed border-pink-500/30 rounded-3xl flex flex-col items-center justify-center text-center hover:bg-pink-500/10 transition-colors">
@@ -132,7 +136,7 @@
                     <span class="text-[10px] text-slate-500 mt-2 uppercase tracking-widest italic">AI จะดึงข้อมูลและวิเคราะห์ให้ทันที</span>
                 </label>
             </div>
-            <div id="ai-status" class="mt-4 text-xs font-bold text-pink-500 uppercase tracking-widest min-h-[1.5em] text-center"></div>
+            <div id="ai-status" class="mt-4 text-xs font-bold text-pink-500 uppercase tracking-widest min-h-[1.5em] text-center px-4"></div>
         </div>
 
         <div id="form-section" class="space-y-8 mb-12 transition-opacity duration-300">
@@ -170,7 +174,7 @@
                 </div>
             </div>
 
-            <!-- Reach -->
+            <!-- Reach Breakdown -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="glass-card p-6 border-t-4 border-t-rose-500">
                     <label class="text-rose-500 font-black">Non-Followers (Viral)</label>
@@ -182,9 +186,9 @@
                 </div>
             </div>
 
-            <!-- Marketing Insights -->
+            <!-- Marketing (Thai Only) -->
             <div class="glass-card p-8">
-                <h3 class="text-md font-black text-white mb-6 uppercase tracking-wider">💡 Marketing Insights (Thai)</h3>
+                <h3 class="text-md font-black text-white mb-6 uppercase tracking-wider">💡 Marketing Insights (Thai Only)</h3>
                 <div class="space-y-6">
                     <div><label>Highlight Title (หัวข้อจุดเด่น)</label><input type="text" id="inp-rtitle-th" placeholder="ระบุหัวข้อบทวิเคราะห์"></div>
                     <div><label>Marketing Description (บทวิเคราะห์ผลลัพธ์)</label><textarea id="inp-rdesc-th" rows="4"></textarea></div>
@@ -201,7 +205,7 @@
                     <div><label>Top Age</label><input type="text" id="inp-age" value="25-34" class="text-yellow-400 text-lg font-black text-center"></div>
                 </div>
                 <div class="mb-10">
-                    <label class="mb-4 text-slate-400 font-bold uppercase tracking-widest">Age Distribution %</label>
+                    <label class="mb-4 text-slate-400 font-bold uppercase tracking-widest">Age Distribution % (จัดระเบียบใหม่)</label>
                     <div class="grid grid-cols-5 gap-4 jetbrains text-center">
                         <div class="bg-black/20 p-2 rounded-xl border border-white/5"><span class="text-[10px] text-slate-500 font-bold mb-1 block uppercase">13-17</span><input type="text" id="inp-age-1" class="text-center bg-transparent border-none p-0 focus:ring-0"></div>
                         <div class="bg-black/20 p-2 rounded-xl border border-white/5"><span class="text-[10px] text-slate-500 font-bold mb-1 block uppercase">18-24</span><input type="text" id="inp-age-2" class="text-center bg-transparent border-none p-0 focus:ring-0"></div>
@@ -232,8 +236,8 @@
     </div>
 
     <script>
-        // 🟢 API Key สำหรับ AI ที่คุณแจ้งมา
-        const apiKey = "AIzaSyAkm0b87IDrZBB9SEjza2X4gNYJDeU_it4";
+        const apiKey = ""; // Mandatory declaration
+        const nokiaApiKey = "AIzaSyAkm0b87IDrZBB9SEjza2X4gNYJDeU_it4"; // กุญแจของคุณ
 
         window.addEventListener('DOMContentLoaded', () => { 
             document.getElementById('report-date').value = new Date().toISOString().split('T')[0]; 
@@ -269,13 +273,14 @@
             } catch (e) { return url; }
         }
 
-        // --- 🤖 AI SCAN HANDLER (VERSION 1.5 FLASH) ---
+        // --- 🤖 AI SCAN HANDLER (DIRECT API) ---
         document.getElementById('image-upload').addEventListener('change', async (e) => {
             const files = e.target.files; if(!files.length) return;
             const statusText = document.getElementById('ai-status');
             const formSection = document.getElementById('form-section');
             
             statusText.innerText = "⏳ AI กำลังเจาะลึกข้อมูลเพื่อเอเจนซี่ (โปรดรอสักครู่)...";
+            statusText.style.color = "#FF1493";
             formSection.style.opacity = "0.4";
             
             try {
@@ -294,8 +299,8 @@
                     parts.push({ inlineData: { mimeType: f.type, data: b64 } }); 
                 }
 
-                // 🟢 ใช้โมเดล gemini-1.5-flash เพื่อให้ทำงานได้กับ Public API Key
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                // 🟢 ยิงตรงเข้าโมเดล gemini-1.5-flash ด้วยกุญแจของคุณโดยตรง
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${nokiaApiKey}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         contents: [{ role: "user", parts }], 
@@ -314,18 +319,16 @@
                     })
                 });
                 
+                const result = await res.json();
+
                 if (!res.ok) {
-                    const errData = await res.json();
-                    throw new Error(errData.error?.message || "API Error");
+                    throw new Error(result.error?.message || "การเชื่อมต่อ AI ล้มเหลว");
                 }
 
-                const result = await res.json();
                 const data = JSON.parse(result.candidates[0].content.parts[0].text);
                 
                 if(data.reportedDate) document.getElementById('report-date').value = data.reportedDate;
-                if(data.publishDate) {
-                    document.getElementById('inp-pub-date').value = data.publishDate;
-                }
+                if(data.publishDate) document.getElementById('inp-pub-date').value = data.publishDate;
                 
                 document.getElementById('inp-views').value = data.views || ""; 
                 document.getElementById('inp-eng').value = data.totalEngagement || ""; 
@@ -352,10 +355,12 @@
                 
                 calculateDaysOnline(); 
                 statusText.innerText = "✅ AGENCY INSIGHT SYNCED";
+                statusText.style.color = "#10b981";
                 formSection.style.opacity = "1";
             } catch (err) { 
                 console.error(err); 
                 statusText.innerText = "❌ SCAN FAILED: " + err.message; 
+                statusText.style.color = "#ef4444";
                 formSection.style.opacity = "1";
             }
         });
@@ -388,7 +393,9 @@
                 const reportId = "report-" + Date.now();
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId), dataToSave);
 
+                // 🚨 ลิงก์ปลายทางสำหรับ amsocute-th 🚨
                 const finalUrl = `https://amsocute-th.github.io/NENO-9/index.html?id=${reportId}`;
+                
                 document.getElementById('share-url').value = finalUrl;
                 document.getElementById('share-link-box').classList.remove('hidden');
                 btn.innerHTML = "✅ PUBLISHED!";
