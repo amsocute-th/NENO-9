@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="th" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AM SO CUTE | Influencer Post Insight Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDKs for Viewer -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 🚨 กุญแจ Firebase ของคุณ พร้อมระบบรองรับ Canvas Preview 🚨
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyB-agjCrPCmLQicu7KJ-Jl9Ca9OyFA8HDQ",
+            authDomain: "nokia-fb-report.firebaseapp.com",
+            projectId: "nokia-fb-report",
+            storageBucket: "nokia-fb-report.firebasestorage.app",
+            messagingSenderId: "58057573736",
+            appId: "1:58057573736:web:c51e87cb332075a05182dd"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'nokia-insight-v1';
+
+        // ดึงข้อมูลเมื่อโหลดหน้าเว็บ
+        async function loadReportData() {
+            try {
+                // รองรับการ Login ทั้งใน Canvas และบนหน้าเว็บจริง
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                // ดึงรหัสรายงานจาก URL เช่น ?id=report-12345
+                const urlParams = new URLSearchParams(window.location.search);
+                const reportId = urlParams.get('id');
+
+                if (reportId) {
+                    const docRef = doc(db, 'artifacts', currentAppId, 'public', 'data', 'reports', reportId);
+                    const docSnap = await getDoc(docRef);
+                    
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('main-content').classList.remove('hidden');
+                        renderDashboard(data);
+                    } else {
+                        document.getElementById('loader-text').innerText = "ไม่พบรายงานนี้ในระบบ (Report Not Found)";
+                        document.getElementById('loader-spinner').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('loader-text').innerText = "ไม่พบรหัสอ้างอิงในลิงก์ (No Report ID provided)";
+                    document.getElementById('loader-spinner').style.display = 'none';
+                }
+            } catch (error) {
+                console.error("Error loading data:", error);
+                const loaderText = document.getElementById('loader-text');
+                const loaderSpinner = document.getElementById('loader-spinner');
+                
+                loaderSpinner.style.display = 'none';
+                
+                if (error.code === 'auth/api-key-not-valid') {
+                    loaderText.innerHTML = "⚠️ โหมด Preview: API Key จำลองหมดอายุ<br><span class='text-xs text-slate-400 mt-2 block'>(ไม่ต้องกังวล โค้ดของคุณพร้อมใช้งานบน Github แล้วครับ!)</span>";
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    loaderText.innerHTML = "⚠️ ยังไม่ได้เปิดใช้งาน Anonymous Auth ใน Firebase";
+                } else {
+                    loaderText.innerHTML = "⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล";
+                }
+
+                // บังคับเปิดหน้า UI เปล่าๆ ขึ้นมาเพื่อให้ไม่ค้างหน้า Loading
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('main-content').classList.remove('hidden');
+                }, 2500);
+            }
+        }
+
+        loadReportData();
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700;800&family=JetBrains+Mono:wght@700&display=swap');
+        body { font-family: 'Prompt', sans-serif; background:#140A1E; color:#f8fafc; line-height: 1.6; }
+        .glass { background:rgba(255,255,255,0.03); backdrop-filter:blur(12px); border:1px solid rgba(255,20,147,0.2); border-radius: 24px; }
+        .jetbrains { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Loading Animation */
+        .spinner { width: 60px; height: 60px; border: 4px solid rgba(255,20,147,0.1); border-radius: 50%; border-top-color: #FF1493; animation: spin 1s ease-in-out infinite; margin: 0 auto 20px auto; box-shadow: 0 0 20px rgba(255,20,147,0.4); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="p-4 md:p-10 min-h-screen relative">
+
+    <!-- Loading Screen -->
+    <div id="loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#140A1E]">
+        <div id="loader-spinner" class="spinner"></div>
+        <h2 id="loader-text" class="text-pink-500 font-black tracking-[0.3em] uppercase text-sm mt-4">Connecting to Database...</h2>
+    </div>
+
+    <!-- Main Content (Hidden by default) -->
+    <div id="main-content" class="max-w-5xl mx-auto hidden">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-white/5 pb-8">
+            <div>
+                <h1 class="text-4xl font-black text-white uppercase tracking-tighter">AM SO CUTE <span class="text-pink-500 underline decoration-cyan-400">Influencer Post Insight Report</span></h1>
+                <p class="text-slate-500 font-bold tracking-[0.3em] uppercase text-[10px] mt-2">Facebook Insight Post</p>
+            </div>
+            <div class="text-right mt-6 md:mt-0 px-6 py-2 glass">
+                <p class="text-[9px] text-slate-500 uppercase font-black">Report Date</p>
+                <p id="disp-repdate" class="text-sm font-black jetbrains text-pink-500">--</p>
+            </div>
+        </header>
+
+        <section class="mb-16">
+            <h2 class="text-xl font-black text-white mb-8 border-l-4 border-pink-500 pl-4 uppercase tracking-widest text-sm">Performance Metrics</h2>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8 text-center jetbrains">
+                <div class="glass p-4"><p class="text-[10px] text-pink-500 font-black uppercase mb-1">Views</p><h3 id="disp-views" class="text-xl font-black text-white">--</h3></div>
+                <div class="glass p-4 border-b-2 border-white"><p class="text-[10px] text-slate-500 font-black uppercase mb-1">Engage</p><h3 id="disp-eng" class="text-xl font-black text-white">--</h3></div>
+                <div class="glass p-4"><p class="text-[10px] text-pink-400 font-black uppercase mb-1">Likes</p><h3 id="disp-likes" class="text-xl font-black text-white">--</h3></div>
+                <div class="glass p-4"><p class="text-[10px] text-cyan-400 font-black uppercase mb-1">Comm.</p><h3 id="disp-comments" class="text-xl font-black text-white">--</h3></div>
+                <div class="glass p-4"><p class="text-[10px] text-emerald-400 font-black uppercase mb-1">Shares</p><h3 id="disp-shares" class="text-xl font-black text-white">--</h3></div>
+                <div class="glass p-4"><p class="text-[10px] text-purple-400 font-black uppercase mb-1">Saves</p><h3 id="disp-saves" class="text-xl font-black text-white">--</h3></div>
+            </div>
+
+            <div class="glass p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-12 mb-8 shadow-2xl relative overflow-hidden">
+                <div class="flex flex-col">
+                    <h3 id="disp-title" class="text-3xl font-black text-white mb-1 leading-tight">--</h3>
+                    <p class="text-xs text-pink-500 font-black mb-6 uppercase tracking-widest">Market Analysis</p>
+                    
+                    <div class="flex flex-wrap gap-3 mb-8 jetbrains text-[11px]">
+                        <span class="bg-black/50 text-slate-300 px-4 py-2 rounded-full border border-white/5">📅 <span id="disp-pubdate">--</span></span>
+                        <span class="bg-pink-500/20 text-pink-500 px-4 py-2 rounded-full border border-pink-500/30 font-black uppercase"><span id="disp-days">0</span> DAYS ONLINE</span>
+                    </div>
+                    
+                    <p id="disp-desc" class="text-sm text-slate-300 mb-10 leading-relaxed text-justify">--</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-8 jetbrains">
+                        <div class="bg-black/40 p-4 rounded-2xl border border-pink-500/20 text-center">
+                            <span class="text-pink-500 block text-[10px] font-black uppercase mb-1 tracking-widest">Non-Followers</span>
+                            <span id="disp-nNum" class="text-white font-black text-xl">--</span> 
+                            <span id="disp-nPct" class="text-pink-400 text-xs">(--%)</span>
+                        </div>
+                        <div class="bg-black/40 p-4 rounded-2xl border border-cyan-500/20 text-center">
+                            <span class="text-cyan-400 block text-[10px] font-black uppercase mb-1 tracking-widest">Followers</span>
+                            <span id="disp-fNum" class="text-white font-black text-xl">--</span> 
+                            <span id="disp-fPct" class="text-cyan-400 text-xs">(--%)</span>
+                        </div>
+                    </div>
+                    
+                    <div id="btn-origin-link"></div>
+                </div>
+                <div class="flex flex-col justify-center min-h-[300px]">
+                    <canvas id="reachChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Video Section -->
+            <div id="video-section"></div>
+            
+        </section>
+
+        <section class="pb-32">
+            <h2 class="text-xl font-black text-white mb-8 border-l-4 border-pink-500 pl-4 uppercase tracking-widest">Target Demographic</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 jetbrains">
+                <div class="md:col-span-2 glass p-10">
+                    <h3 class="text-[10px] font-black text-center mb-8 uppercase tracking-[0.3em] text-slate-500">Age Distribution (%)</h3>
+                    <div class="h-64"><canvas id="ageChart"></canvas></div>
+                </div>
+                <div class="flex flex-col gap-6">
+                    <div class="glass p-6 text-center border-t-4 border-yellow-400">
+                        <p class="text-[10px] text-yellow-400 font-black uppercase mb-3 tracking-widest">Primary Group</p>
+                        <h4 id="disp-age" class="text-4xl font-black text-white">--</h4>
+                    </div>
+                    <div class="glass p-8 flex justify-around items-center h-full">
+                        <div class="text-center">
+                            <p class="text-4xl mb-2 text-cyan-400">♂</p>
+                            <p id="disp-male" class="text-2xl font-black text-white">--%</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-4xl mb-2 text-pink-500">♀</p>
+                            <p id="disp-female" class="text-2xl font-black text-white">--%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 bg-gradient-to-r from-pink-900/30 to-cyan-900/30 p-10 glass border-white/5 shadow-xl">
+                <p class="text-sm text-slate-200 leading-relaxed font-medium italic">
+                    <span class="text-pink-500 font-black not-italic tracking-widest uppercase">CORE INSIGHT:</span><br><br>
+                    <span id="disp-insight" class="block space-y-2">--</span>
+                </p>
+            </div>
+        </section>
+        
+        <footer class="mt-20 pt-10 border-t border-white/5 text-center text-slate-600 text-[10px] uppercase tracking-[0.5em]">
+            <p>NOKIA SUTASINEE | FACEBOOK PERFORMANCE 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        // ฟังก์ชันนีจะถูกเรียกหลังจากดึงข้อมูลจาก Cloud สำเร็จ
+        function renderDashboard(d) {
+            
+            // Format Dates
+            document.getElementById('disp-repdate').innerText = d.reportDate ? new Date(d.reportDate).toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'}) : '-';
+            document.getElementById('disp-pubdate').innerText = d.publishDate ? new Date(d.publishDate).toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'}) : '-';
+            document.getElementById('disp-days').innerText = d.daysOnline || "0";
+            
+            // Metrics
+            document.getElementById('disp-views').innerText = d.views || "-";
+            document.getElementById('disp-eng').innerText = d.eng || "-";
+            document.getElementById('disp-likes').innerText = d.likes || "-";
+            document.getElementById('disp-comments').innerText = d.comments || "-";
+            document.getElementById('disp-shares').innerText = d.shares || "-";
+            document.getElementById('disp-saves').innerText = d.saves || "-";
+            
+            // Analysis
+            document.getElementById('disp-title').innerText = d.rTitleTH || "Overview";
+            document.getElementById('disp-desc').innerHTML = (d.rDescTH || "-").replace(/\n/g, '<br>');
+            
+            // Reach
+            document.getElementById('disp-nNum').innerText = d.nonNum || "0";
+            document.getElementById('disp-nPct').innerText = "(" + (d.nonPct || 0) + "%)";
+            document.getElementById('disp-fNum').innerText = d.follNum || "0";
+            document.getElementById('disp-fPct').innerText = "(" + (d.follPct || 0) + "%)";
+
+            // Origin Link Button
+            if(d.link) {
+                document.getElementById('btn-origin-link').innerHTML = `<a href="${d.link}" target="_blank" class="bg-pink-500 hover:bg-pink-600 p-4 rounded-2xl text-xs font-black text-white text-center tracking-[0.2em] shadow-lg inline-block w-full transition-colors">VIEW ORIGINAL POST</a>`;
+            }
+
+            // Video Spotlight
+            if(d.videoUrl) {
+                document.getElementById('video-section').innerHTML = `
+                <div class="mt-16">
+                    <h3 class="text-xl font-black text-white mb-8 border-l-4 border-cyan-400 pl-4 uppercase tracking-widest">Video Spotlight</h3>
+                    <div class="glass p-3 bg-black/40 shadow-2xl">
+                        <div class="aspect-video w-full rounded-[20px] overflow-hidden">
+                            <iframe src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(d.videoUrl)}&show_text=0&width=560" width="100%" height="100%" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // Demographics
+            document.getElementById('disp-age').innerText = d.age || "-";
+            document.getElementById('disp-male').innerText = (d.male || "0") + "%";
+            document.getElementById('disp-female').innerText = (d.female || "0") + "%";
+            document.getElementById('disp-insight').innerHTML = (d.insight || "-").replace(/\n/g, '<br>');
+
+            // Render Doughnut Chart (Reach)
+            const reachData = [parseFloat(d.nonPct) || 50, parseFloat(d.follPct) || 50];
+            new Chart(document.getElementById('reachChart'), { 
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Non-Followers', 'Followers'], 
+                    datasets: [{ data: reachData, backgroundColor: ['#FF1493', '#0ea5e9'], borderWidth: 0 }] 
+                }, 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, cutout: '80%', 
+                    plugins: { legend: { display: false } } 
+                } 
+            }); 
+            
+            // Render Bar Chart (Age)
+            const ageData = d.chart || [0,0,0,0,0];
+            const maxVal = Math.max(...ageData);
+            const bgColors = ageData.map(v => (v === maxVal && v > 0) ? '#FF1493' : 'rgba(255,255,255,0.08)');
+            
+            new Chart(document.getElementById('ageChart'), { 
+                type: 'bar', 
+                data: { 
+                    labels: ['13-17', '18-24', '25-34', '35-44', '45+'], 
+                    datasets: [{ data: ageData, backgroundColor: bgColors, borderRadius: 12, barPercentage: 0.6 }] 
+                }, 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    scales: { 
+                        y: { display: false, beginAtZero: true }, 
+                        x: { grid: { display: false }, ticks: { color: '#4b5563', font: { weight: 'bold' } } } 
+                    }, 
+                    plugins: { legend: { display: false } } 
+                } 
+            });
+        }
+    </script>
+</body>
+</html>
