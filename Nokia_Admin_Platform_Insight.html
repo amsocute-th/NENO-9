@@ -3,59 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON-9 | Insight Report Admin (Cloud)</title>
+    <title>NEON-9 | Insight Report Admin (Agency Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 🚨 นำโค้ด Firebase ของคุณ (จากขั้นตอนที่ 1) มาวางทับตรงนี้ 🚨
-        // หากอยู่ในโหมด Preview ของ Canvas จะใช้ Config อัตโนมัติเพื่อป้องกัน Error
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // 🚨 กุญแจ Firebase ของคุณ (เชื่อมต่อกับโปรเจกต์ nokia-fb-report) 🚨
+        const firebaseConfig = {
             apiKey: "AIzaSyB-agjCrPCmLQicu7KJ-Jl9Ca9OyFA8HDQ",
             authDomain: "nokia-fb-report.firebaseapp.com",
             projectId: "nokia-fb-report",
             storageBucket: "nokia-fb-report.firebasestorage.app",
             messagingSenderId: "58057573736",
-            appId: "1:58057573736:web:c51e87cb332075a05182dd",
-            measurementId: "G-H1K4ZS54PX"
+            appId: "1:58057573736:web:c51e87cb332075a05182dd"
         };
         
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'nokia-insight-v1';
+        const appId = 'nokia-insight-v1';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         window.nokiaDB = { db, auth, appId, setDoc, doc };
 
-        // ยืนยันตัวตนแบบไม่ระบุชื่อ พร้อมระบบดักจับ Error เมื่อยังไม่ได้ใส่ API Key ของจริง
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.warn("⚠️ ข้อควรระวัง: กรุณาแทนที่ 'YOUR_API_KEY' ด้วย API Key ของคุณในโค้ดเพื่อใช้งานระบบ Cloud (" + error.message + ")");
-            }
-        };
-        initAuth();
+        // ยืนยันตัวตนแบบไม่ระบุตัวตนเพื่อเขียนข้อมูลลง Database
+        signInAnonymously(auth).catch((error) => console.error("Auth Error:", error));
     </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&family=Noto+Sans+Thai:wght@300;400;500;700&display=swap');
-        :root { --color-primary-pink: #FF1493; --color-bg-dark: #140A1E; --gradient-neon: linear-gradient(135deg, #FF1493 0%, #D100D1 100%); }
-        body { font-family: 'Prompt', 'Noto Sans Thai', sans-serif; background-color: var(--color-bg-dark); color: #f8fafc; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 20, 147, 0.2); border-radius: 24px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); }
-        input, textarea { background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255, 255, 255, 0.1); color: white; border-radius: 16px; padding: 0.75rem 1rem; width: 100%; transition: all 0.2s; }
-        input:focus, textarea:focus { outline: none; border-color: var(--color-primary-pink); box-shadow: 0 0 10px rgba(255, 20, 147, 0.3); }
-        .btn-primary { background: var(--gradient-neon); border-radius: 999px; color: white; font-weight: 600; padding: 1rem 2.5rem; transition: all 0.3s; box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3); cursor: pointer; }
-        .btn-primary:hover { transform: scale(1.05); }
+        
+        :root {
+            --color-primary-pink: #FF1493;
+            --color-bg-dark: #140A1E;
+            --gradient-neon: linear-gradient(135deg, #FF1493 0%, #D100D1 100%);
+            --radius-lg: 24px;
+        }
+
+        body { 
+            font-family: 'Prompt', 'Noto Sans Thai', sans-serif; 
+            background-color: var(--color-bg-dark); 
+            color: #f8fafc; 
+            background-image: radial-gradient(circle at 10% 20%, rgba(255, 20, 147, 0.05) 0%, transparent 40%);
+        }
+
         .jetbrains { font-family: 'JetBrains Mono', monospace; }
-        label { font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 20, 147, 0.2);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        input, textarea { 
+            background-color: rgba(0,0,0,0.3); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            color: white; 
+            border-radius: 16px; 
+            padding: 0.75rem 1rem; 
+            width: 100%; 
+            transition: all 0.2s;
+        }
+
+        input:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--color-primary-pink); 
+            box-shadow: 0 0 10px rgba(255, 20, 147, 0.3);
+        }
+
+        input[readonly] { opacity: 0.5; cursor: not-allowed; background-color: rgba(0,0,0,0.5); }
+
+        .btn-primary { 
+            background: var(--gradient-neon); 
+            border-radius: 999px; 
+            color: white; 
+            font-weight: 800; 
+            padding: 1.2rem 3rem; 
+            transition: all 0.3s; 
+            box-shadow: 0 4px 20px rgba(255, 20, 147, 0.4); 
+            cursor: pointer; 
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 4px 30px rgba(255, 20, 147, 0.6); }
+
+        label { 
+            font-size: 0.75rem; 
+            color: #94a3b8; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            margin-bottom: 0.5rem; 
+            display: block; 
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -63,42 +111,45 @@
     <div class="max-w-4xl mx-auto">
         <header class="mb-12 flex flex-col md:flex-row md:justify-between md:items-end border-b border-white/10 pb-6 gap-4">
             <div>
-                <h1 class="text-4xl font-black text-white flex items-center gap-3"><span class="text-5xl drop-shadow-[0_0_15px_rgba(255,20,147,0.5)]">🧬</span> NEON-9 Insight Report Admin</h1>
+                <h1 class="text-4xl font-black text-white flex items-center gap-3">
+                    <span class="text-5xl drop-shadow-[0_0_15px_rgba(255,20,147,0.5)]">🧬</span> NEON-9 Insight Report Admin
+                </h1>
                 <p class="text-pink-500 font-bold mt-2 tracking-[0.2em] text-xs uppercase">Facebook Insight v.1 (Cloud Enhanced)</p>
             </div>
             <div class="bg-black/40 border border-white/10 px-4 py-2 rounded-2xl text-[10px] text-slate-400 inline-block">
-                REPORT DATE: <input type="date" id="report-date" onchange="calculateDaysOnline()" class="bg-transparent border-none text-pink-500 w-32 p-0 focus:ring-0 text-right font-black jetbrains">
+                REPORT DATE: <input type="date" id="report-date" class="bg-transparent border-none text-pink-500 w-32 p-0 focus:ring-0 text-right font-black jetbrains">
             </div>
         </header>
 
-        <!-- 🚀 AI SECTION -->
+        <!-- 🚀 AI SCAN SECTION -->
         <div class="glass-card p-8 mb-10 relative overflow-hidden">
-            <h2 class="text-2xl font-black text-white mb-2 flex items-center gap-3">AI Auto-Entry</h2>
+            <h2 class="text-2xl font-black text-white mb-2 flex items-center gap-3">AI Auto-Entry <span class="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full">READY</span></h2>
             <div class="w-full relative mt-4">
                 <input type="file" id="image-upload" class="hidden" accept="image/*" multiple>
                 <label for="image-upload" class="cursor-pointer bg-black/20 p-10 border-2 border-dashed border-pink-500/30 rounded-3xl flex flex-col items-center justify-center text-center hover:bg-pink-500/10 transition-colors">
                     <span class="text-5xl mb-4">📸</span>
                     <span class="text-white font-black text-lg">UPLOAD INSIGHT SCREENSHOTS</span>
+                    <span class="text-[10px] text-slate-500 mt-2 uppercase tracking-widest italic">AI จะดึงข้อมูลและวิเคราะห์ให้ทันที</span>
                 </label>
             </div>
-            <div id="ai-status" class="mt-4 text-xs font-bold text-pink-500 uppercase"></div>
+            <div id="ai-status" class="mt-4 text-xs font-bold text-pink-500 uppercase tracking-widest min-h-[1.5em] text-center"></div>
         </div>
 
-        <!-- FORM SECTION -->
-        <div id="form-section" class="space-y-8 mb-12">
-            <!-- Links -->
+        <div id="form-section" class="space-y-8 mb-12 transition-opacity duration-300">
+            <!-- Connectivity -->
             <div class="glass-card p-6 border-l-4 border-l-pink-500">
                 <h3 class="text-md font-black text-white mb-6 uppercase tracking-wider">🔗 Connectivity & Visuals</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div><label>Source Link (ลิงก์อ้างอิง)</label><input type="url" id="inp-link" placeholder="https://facebook.com/..."></div>
-                    <div><label>Video / Reel URL (ลิงก์วิดีโอ)</label><input type="url" id="inp-video-url" placeholder="แปะลิงก์ Reels หรือ Share link ที่นี่"></div>
+                    <div><label>Video / Reel URL (ลิงก์วิดีโอ)</label><input type="url" id="inp-video-url" placeholder="แปะลิงก์ Reels หรือ Share link"></div>
                 </div>
             </div>
 
-            <!-- Date & Duration -->
+            <!-- Meta Data -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="glass-card p-6">
-                    <label>Publish Date (วันที่โพสต์)</label><input type="date" id="inp-pub-date" class="jetbrains font-bold opacity-50 bg-slate-900" onchange="calculateDaysOnline()">
+                    <label>Publish Date (วันที่โพสต์) <span class="text-pink-500 lowercase ml-1 font-normal">*Auto-fill by AI</span></label>
+                    <input type="date" id="inp-pub-date" class="jetbrains font-bold" readonly>
                 </div>
                 <div class="glass-card p-6 flex flex-col justify-center text-center border-b-4 border-b-cyan-400">
                     <label>Online Duration</label>
@@ -106,16 +157,16 @@
                 </div>
             </div>
 
-            <!-- Core Metrics -->
+            <!-- Stats -->
             <div class="glass-card p-8">
                 <h3 class="text-md font-black text-white mb-8 uppercase tracking-wider border-b border-white/5 pb-4">📊 Engagement Statistics</h3>
                 <div class="grid grid-cols-2 md:grid-cols-6 gap-4 jetbrains text-center">
-                    <div><label>Views</label><input type="text" id="inp-views" class="text-center text-lg font-black text-pink-500"></div>
-                    <div><label>Engage</label><input type="text" id="inp-eng" class="text-center text-lg font-black"></div>
-                    <div><label>Likes</label><input type="text" id="inp-likes" class="text-center text-lg font-black"></div>
-                    <div><label>Comments</label><input type="text" id="inp-comments" class="text-center text-lg font-black"></div>
-                    <div><label>Shares</label><input type="text" id="inp-shares" class="text-center text-lg font-black text-emerald-400"></div>
-                    <div><label>Saves</label><input type="text" id="inp-saves" class="text-center text-lg font-black"></div>
+                    <div><label>Views</label><input type="text" id="inp-views" class="text-pink-500 font-black text-center"></div>
+                    <div><label>Engage</label><input type="text" id="inp-eng" class="text-center"></div>
+                    <div><label>Likes</label><input type="text" id="inp-likes" class="text-center"></div>
+                    <div><label>Comments</label><input type="text" id="inp-comments" class="text-center"></div>
+                    <div><label>Shares</label><input type="text" id="inp-shares" class="text-emerald-400 text-center"></div>
+                    <div><label>Saves</label><input type="text" id="inp-saves" class="text-center"></div>
                 </div>
             </div>
 
@@ -131,52 +182,49 @@
                 </div>
             </div>
 
-            <!-- Marketing Insights -->
+            <!-- Marketing (Thai Only) -->
             <div class="glass-card p-8">
-                <h3 class="text-md font-black text-white mb-6 uppercase tracking-wider">💡 Marketing Insights</h3>
+                <h3 class="text-md font-black text-white mb-6 uppercase tracking-wider">💡 Marketing Insights (Thai Only)</h3>
                 <div class="space-y-6">
-                    <div><label>Highlight Title (หัวข้อจุดเด่น)</label><input type="text" id="inp-rtitle-th" placeholder="ระบุหัวข้อบทวิเคราะห์ภาษาไทย"></div>
-                    <div><label>Marketing Description (บทวิเคราะห์)</label><textarea id="inp-rdesc-th" rows="4"></textarea></div>
+                    <div><label>Highlight Title (หัวข้อจุดเด่น)</label><input type="text" id="inp-rtitle-th" placeholder="ระบุหัวข้อบทวิเคราะห์"></div>
+                    <div><label>Marketing Description (บทวิเคราะห์ผลลัพธ์)</label><textarea id="inp-rdesc-th" rows="4"></textarea></div>
                 </div>
             </div>
 
-            <!-- Audience Fit -->
+            <!-- Audience (Organized Layout) -->
             <div class="glass-card p-8 border-b-4 border-b-pink-500">
                 <h3 class="text-md font-black text-white mb-6 uppercase tracking-wider">🎯 Audience Fit & Agency Deep Insight</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 jetbrains">
-                    <div><label>Male %</label><input type="text" id="inp-male" placeholder="0" class="text-cyan-400 text-lg font-black text-center"></div>
-                    <div><label>Female %</label><input type="text" id="inp-female" placeholder="0" class="text-pink-500 text-lg font-black text-center"></div>
-                    <div><label>Unknown %</label><input type="text" id="inp-unknown" placeholder="0" class="text-lg font-black text-center"></div>
-                    <div><label>Top Age</label><input type="text" id="inp-age" placeholder="25-34" class="text-yellow-400 text-lg font-black text-center"></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10 jetbrains">
+                    <div><label>Male %</label><input type="text" id="inp-male" value="0" class="text-cyan-400 text-lg font-black text-center"></div>
+                    <div><label>Female %</label><input type="text" id="inp-female" value="0" class="text-pink-500 text-lg font-black text-center"></div>
+                    <div><label>Unknown %</label><input type="text" id="inp-unknown" value="0" class="text-lg font-black text-center"></div>
+                    <div><label>Top Age</label><input type="text" id="inp-age" value="25-34" class="text-yellow-400 text-lg font-black text-center"></div>
                 </div>
-                <div class="mb-8">
-                    <label class="mb-3">Age Distribution % (ใส่เฉพาะตัวเลข)</label>
-                    <div class="grid grid-cols-5 gap-2 jetbrains text-center">
-                        <div><span class="text-[10px] text-slate-400 font-bold">13-17</span><input type="text" id="inp-age-1" class="text-center"></div>
-                        <div><span class="text-[10px] text-slate-400 font-bold">18-24</span><input type="text" id="inp-age-2" class="text-center"></div>
-                        <div><span class="text-[10px] text-slate-400 font-bold">25-34</span><input type="text" id="inp-age-3" class="text-center"></div>
-                        <div><span class="text-[10px] text-slate-400 font-bold">35-44</span><input type="text" id="inp-age-4" class="text-center"></div>
-                        <div><span class="text-[10px] text-slate-400 font-bold">45+</span><input type="text" id="inp-age-5" class="text-center"></div>
+                <div class="mb-10">
+                    <label class="mb-4 text-slate-400 font-bold uppercase tracking-widest">Age Distribution %</label>
+                    <div class="grid grid-cols-5 gap-4 jetbrains text-center">
+                        <div class="bg-black/20 p-2 rounded-xl border border-white/5"><span class="text-[10px] text-slate-500 font-bold mb-1 block uppercase">13-17</span><input type="text" id="inp-age-1" class="text-center bg-transparent border-none p-0 focus:ring-0"></div>
+                        <div class="bg-black/20 p-2 rounded-xl border border-white/5"><span class="text-[10px] text-slate-500 font-bold mb-1 block uppercase">18-24</span><input type="text" id="inp-age-2" class="text-center bg-transparent border-none p-0 focus:ring-0"></div>
+                        <div class="bg-black/20 p-2 rounded-xl border border-white/5"><span class="text-[10px] text-slate-500 font-bold mb-1 block uppercase">25-34</span><input type="text" id="inp-age-3" class="text-center bg-transparent border-none p-0 focus:ring-0"></div>
+                        <div class="bg-black/20 p-2 rounded-xl border border-white/5"><span class="text-[10px] text-slate-500 font-bold mb-1 block uppercase">35-44</span><input type="text" id="inp-age-4" class="text-center bg-transparent border-none p-0 focus:ring-0"></div>
+                        <div class="bg-black/20 p-2 rounded-xl border border-white/5"><span class="text-[10px] text-slate-500 font-bold mb-1 block uppercase">45+</span><input type="text" id="inp-age-5" class="text-center bg-transparent border-none p-0 focus:ring-0"></div>
                     </div>
                 </div>
-                <div><label>Audience Deep Insight (สำหรับเอเจนซี่)</label><textarea id="inp-ainsight" rows="6"></textarea></div>
+                <div><label>Audience Deep Insight (สำหรับเอเจนซี่)</label><textarea id="inp-ainsight" rows="6" placeholder="AI จะวิเคราะห์กำลังซื้อ, ความสนใจ และพฤติกรรมแยกตามบรรทัดให้อัตโนมัติ"></textarea></div>
             </div>
         </div>
 
         <!-- 🚀 CLOUD ACTION -->
         <div class="text-center p-12 bg-white/[0.02] rounded-[3rem] border border-white/5 shadow-2xl space-y-6">
             <h2 class="text-2xl font-black text-white uppercase tracking-widest">Cloud Publishing</h2>
-            <p class="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">บันทึกลงคลาวด์และสร้างลิงก์สำหรับแชร์ให้ลูกค้าบน Github ได้ทันที</p>
-            
             <div class="flex flex-col items-center gap-4">
                 <button onclick="publishToCloud()" id="btn-publish" class="btn-primary flex items-center gap-3">
                     <span>🚀</span> PUBLISH & GET SHARE LINK
                 </button>
-                
-                <div id="share-link-box" class="hidden w-full max-w-lg mt-4">
-                    <div class="bg-black/40 border border-pink-500/30 p-2 pl-4 rounded-2xl flex items-center gap-3">
+                <div id="share-link-box" class="hidden w-full max-w-lg mt-4 animate-pulse">
+                    <div class="bg-black/40 border border-pink-500/30 p-3 pl-5 rounded-2xl flex items-center gap-3">
                         <input type="text" id="share-url" readonly class="bg-transparent border-none text-sm text-cyan-400 font-bold focus:ring-0 p-0 w-full outline-none">
-                        <button onclick="copyLink()" class="bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold px-5 py-3 rounded-xl whitespace-nowrap transition-colors">COPY</button>
+                        <button onclick="copyLink()" class="bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold px-5 py-3 rounded-xl whitespace-nowrap transition-colors">COPY LINK</button>
                     </div>
                 </div>
             </div>
@@ -184,7 +232,8 @@
     </div>
 
     <script>
-        const apiKey = ""; // Runtime key for Gemini (ถ้าใช้ใน Canvas)
+        // 🟢 API Key สำหรับ AI ที่คุณแจ้งมา (ฝังให้แล้วครับ)
+        const apiKey = "AIzaSyAkm0b87IDrZBB9SEjza2X4gNYJDeU_it4";
 
         window.addEventListener('DOMContentLoaded', () => { 
             document.getElementById('report-date').value = new Date().toISOString().split('T')[0]; 
@@ -220,13 +269,25 @@
             } catch (e) { return url; }
         }
 
+        // --- 🤖 AI SCAN HANDLER (FIXED & IMPROVED) ---
         document.getElementById('image-upload').addEventListener('change', async (e) => {
             const files = e.target.files; if(!files.length) return;
             const statusText = document.getElementById('ai-status');
-            statusText.innerText = "⏳ SCANNING DATABASE...";
+            const formSection = document.getElementById('form-section');
+            
+            statusText.innerText = "⏳ AI กำลังเจาะลึกข้อมูลเพื่อเอเจนซี่ (โปรดรอสักครู่)...";
+            formSection.style.opacity = "0.4";
             
             try {
-                const prompt = `Analyze Facebook Insight images. Extract basic metrics. Generate titleTH and descTH. Extract Reach Breakdown (nonFollNum, nonFollPct, follNum, follPct). Generate 'audienceInsight' in THAI using \\n. For Age Distribution (a13 to a45), return raw numbers only. Return JSON.`;
+                const prompt = `Analyze Facebook Insight images. 
+                1. Extract basic metrics. Identify publishDate (YYYY-MM-DD).
+                2. Generate 'titleTH' and 'descTH' in Thai (Professional & ROI-focused).
+                3. Generate 'audienceInsight' in THAI.
+                CRITICAL REQUIREMENT:
+                - For 'audienceInsight', analyze for Marketing Agency use. Include 3 dimensions: 1) กำลังซื้อ 2) ความสนใจหลัก 3) พฤติกรรมการเสพสื่อ. Use newlines (\\n) for readability.
+                - For Age Distribution (a13, a18, a25, a35, a45), return ONLY raw numbers (e.g., 35.5).
+                Return JSON only.`;
+
                 const parts = [{ text: prompt }];
                 for(let f of files) { 
                     const b64 = await new Promise(r => { const reader = new FileReader(); reader.onload = () => r(reader.result.split(',')[1]); reader.readAsDataURL(f); }); 
@@ -235,32 +296,55 @@
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig: { responseMimeType: "application/json", responseSchema: { type: "OBJECT", properties: { reportedDate: {type:"STRING"}, publishDate: {type:"STRING"}, views: {type:"STRING"}, totalEngagement: {type:"STRING"}, likes: {type:"STRING"}, comments: {type:"STRING"}, shares: {type:"STRING"}, saves: {type:"STRING"}, nonFollNum: {type:"STRING"}, nonFollPct: {type:"STRING"}, follNum: {type:"STRING"}, follPct: {type:"STRING"}, titleTH: {type:"STRING"}, descTH: {type:"STRING"}, male: {type:"STRING"}, female: {type:"STRING"}, unknown: {type:"STRING"}, topAge: {type:"STRING"}, a13: {type:"STRING"}, a18: {type:"STRING"}, a25: {type:"STRING"}, a35: {type:"STRING"}, a45: {type:"STRING"}, audienceInsight: {type:"STRING"} } } } })
+                    body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig: { responseMimeType: "application/json" } })
                 });
                 
-                const data = JSON.parse((await res.json()).candidates[0].content.parts[0].text);
+                const result = await res.json();
+                const data = JSON.parse(result.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, ""));
                 
                 if(data.reportedDate) document.getElementById('report-date').value = data.reportedDate;
-                if(data.publishDate) { document.getElementById('inp-pub-date').value = data.publishDate; document.getElementById('inp-pub-date').classList.remove('opacity-50'); }
+                if(data.publishDate) {
+                    document.getElementById('inp-pub-date').value = data.publishDate;
+                }
                 
-                document.getElementById('inp-views').value = data.views || ""; document.getElementById('inp-eng').value = data.totalEngagement || ""; document.getElementById('inp-likes').value = data.likes || ""; document.getElementById('inp-comments').value = data.comments || ""; document.getElementById('inp-shares').value = data.shares || ""; document.getElementById('inp-saves').value = data.saves || "";
-                document.getElementById('inp-non-num').value = data.nonFollNum || ""; document.getElementById('inp-non-pct').value = data.nonFollPct || ""; document.getElementById('inp-foll-num').value = data.follNum || ""; document.getElementById('inp-foll-pct').value = data.follPct || "";
-                document.getElementById('inp-rtitle-th').value = data.titleTH || ""; document.getElementById('inp-rdesc-th').value = data.descTH || ""; 
-                document.getElementById('inp-male').value = data.male || "0"; document.getElementById('inp-female').value = data.female || "0"; document.getElementById('inp-unknown').value = data.unknown || "0"; document.getElementById('inp-age').value = data.topAge || "";
-                document.getElementById('inp-age-1').value = data.a13 || "0"; document.getElementById('inp-age-2').value = data.a18 || "0"; document.getElementById('inp-age-3').value = data.a25 || "0"; document.getElementById('inp-age-4').value = data.a35 || "0"; document.getElementById('inp-age-5').value = data.a45 || "0";
+                document.getElementById('inp-views').value = data.views || ""; 
+                document.getElementById('inp-eng').value = data.totalEngagement || ""; 
+                document.getElementById('inp-likes').value = data.likes || ""; 
+                document.getElementById('inp-comments').value = data.comments || ""; 
+                document.getElementById('inp-shares').value = data.shares || ""; 
+                document.getElementById('inp-saves').value = data.saves || "";
+                document.getElementById('inp-non-num').value = data.nonFollNum || ""; 
+                document.getElementById('inp-non-pct').value = data.nonFollPct || ""; 
+                document.getElementById('inp-foll-num').value = data.follNum || ""; 
+                document.getElementById('inp-foll-pct').value = data.follPct || "";
+                document.getElementById('inp-rtitle-th').value = data.titleTH || ""; 
+                document.getElementById('inp-rdesc-th').value = data.descTH || ""; 
+                document.getElementById('inp-male').value = data.male || "0"; 
+                document.getElementById('inp-female').value = data.female || "0"; 
+                document.getElementById('inp-unknown').value = data.unknown || "0"; 
+                document.getElementById('inp-age').value = data.topAge || "";
+                document.getElementById('inp-age-1').value = data.a13 || "0"; 
+                document.getElementById('inp-age-2').value = data.a18 || "0"; 
+                document.getElementById('inp-age-3').value = data.a25 || "0"; 
+                document.getElementById('inp-age-4').value = data.a35 || "0"; 
+                document.getElementById('inp-age-5').value = data.a45 || "0";
                 document.getElementById('inp-ainsight').value = data.audienceInsight || "";
                 
-                calculateDaysOnline(); statusText.innerText = "✅ AGENCY INSIGHT SYNCED";
-            } catch (err) { console.error(err); statusText.innerText = "❌ SCAN FAILED"; }
+                calculateDaysOnline(); 
+                statusText.innerText = "✅ AGENCY INSIGHT SYNCED";
+                formSection.style.opacity = "1";
+            } catch (err) { 
+                console.error(err); 
+                statusText.innerText = "❌ SCAN FAILED: โปรดตรวจสอบภาพหรือ API Key"; 
+                formSection.style.opacity = "1";
+            }
         });
 
+        // --- ☁️ CLOUD PUBLISHING ---
         async function publishToCloud() {
             const btn = document.getElementById('btn-publish');
-            if (!window.nokiaDB) { alert("เชื่อมต่อ Cloud ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ"); return; }
-            if (!window.nokiaDB.auth.currentUser) { 
-                alert("⚠️ ไม่สามารถบันทึกได้! กรุณาตรวจสอบว่าคุณได้ใส่ Firebase API Key ของตัวเองในโค้ดแล้วหรือยังครับ"); 
-                return; 
-            }
+            if (!window.nokiaDB) { alert("เชื่อมต่อคลาวด์ไม่ได้ กรุณารีเฟรช"); return; }
+            if (!window.nokiaDB.auth.currentUser) { alert("รอเข้าระบบคลาวด์สักครู่..."); return; }
             
             btn.innerHTML = "⏳ PUBLISHING..."; btn.disabled = true;
 
@@ -284,21 +368,21 @@
                 const reportId = "report-" + Date.now();
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId), dataToSave);
 
-                // 🚨 อัปเดตลิงก์ Github ของคุณให้ถูกต้องตรงนี้ 🚨
+                // 🚨 ลิงก์ปลายทางสำหรับ amsocute-th 🚨
                 const finalUrl = `https://amsocute-th.github.io/NENO-9/index.html?id=${reportId}`;
                 
                 document.getElementById('share-url').value = finalUrl;
                 document.getElementById('share-link-box').classList.remove('hidden');
                 btn.innerHTML = "✅ PUBLISHED!";
             } catch (err) {
-                console.error(err); alert("บันทึกไม่สำเร็จ ลองอีกครั้ง"); btn.innerHTML = "❌ FAILED";
+                console.error(err); alert("บันทึกไม่สำเร็จ"); btn.innerHTML = "❌ FAILED";
             } finally { btn.disabled = false; }
         }
 
         function copyLink() {
             const copyText = document.getElementById("share-url");
             copyText.select(); document.execCommand("copy");
-            alert("คัดลอกลิงก์สำเร็จ!");
+            alert("คัดลอกลิงก์สำเร็จ! ส่งต่อให้ลูกค้าได้เลยครับ");
         }
     </script>
 </body>
